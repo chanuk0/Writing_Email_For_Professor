@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kanana Mail Studio</title>
+    <meta
+      name="description"
+      content="대학생이 교수님께 보낼 메일 초안을 카나나 API로 작성하는 GitHub Pages용 정적 웹페이지"
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="page-header">
+        <p class="eyebrow">GitHub Pages Static App</p>
+        <div class="header-copy">
+          <h1>Kanana Mail Studio</h1>
+          <p>
+            학생 기본 정보와 상황 설명을 바탕으로 교수님께 보낼 정중한 메일 초안을
+            생성합니다.
+          </p>
+        </div>
+        <div class="header-note">
+          <strong>브라우저 직접 호출</strong>
+          <span>API 키는 입력 시점에만 사용하며 페이지 안에 하드코딩하지 않습니다.</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="surface composer">
+          <div class="section-heading">
+            <h2>입력</h2>
+            <p>교수님 정보, 학생 정보, 요청 상황을 채우면 바로 초안을 만들 수 있습니다.</p>
+          </div>
+
+          <form id="mail-form" class="mail-form">
+            <label class="field field-wide">
+              <span>카나나 API 키</span>
+              <div class="secret-input">
+                <input
+                  id="apiKey"
+                  name="apiKey"
+                  type="password"
+                  autocomplete="off"
+                  placeholder="KC_..."
+                  required
+                >
+                <button id="toggleApiKey" type="button" class="ghost-button">
+                  표시
+                </button>
+              </div>
+            </label>
+
+            <div class="grid-two">
+              <label class="field">
+                <span>교수님 성함</span>
+                <input
+                  id="professorName"
+                  name="professorName"
+                  type="text"
+                  placeholder="김민준"
+                  required
+                >
+              </label>
+
+              <label class="field">
+                <span>수강 과목</span>
+                <input
+                  id="courseName"
+                  name="courseName"
+                  type="text"
+                  placeholder="데이터구조"
+                  required
+                >
+              </label>
+            </div>
+
+            <div class="grid-three">
+              <label class="field">
+                <span>이름</span>
+                <input
+                  id="studentName"
+                  name="studentName"
+                  type="text"
+                  placeholder="홍길동"
+                  required
+                >
+              </label>
+
+              <label class="field">
+                <span>학과</span>
+                <input
+                  id="department"
+                  name="department"
+                  type="text"
+                  placeholder="컴퓨터공학과"
+                  required
+                >
+              </label>
+
+              <label class="field">
+                <span>학번</span>
+                <input
+                  id="studentId"
+                  name="studentId"
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="20250123"
+                  required
+                >
+              </label>
+            </div>
+
+            <label class="field field-wide">
+              <span>메일에 반영할 상황 설명</span>
+              <textarea
+                id="userPrompt"
+                name="userPrompt"
+                rows="8"
+                placeholder="예: 중간고사 일정이 강의계획서대로 진행되는지, 혹은 별도 공지가 예정되어 있는지 정중하게 묻고 싶습니다."
+                required
+              ></textarea>
+            </label>
+
+            <div class="toggle-row">
+              <label class="checkbox">
+                <input id="rememberProfile" name="rememberProfile" type="checkbox">
+                <span>기본 정보만 이 브라우저에 저장</span>
+              </label>
+              <p class="microcopy">API 키와 생성 결과는 저장하지 않습니다.</p>
+            </div>
+
+            <div class="actions">
+              <button id="generateButton" type="submit" class="primary-button">
+                메일 초안 생성
+              </button>
+              <button id="fillExampleButton" type="button" class="secondary-button">
+                예시 입력
+              </button>
+              <button id="clearButton" type="button" class="ghost-button">
+                입력 비우기
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="surface output">
+          <div class="section-heading">
+            <h2>출력</h2>
+            <p>생성된 제목과 본문을 바로 복사해 메일에 붙여넣을 수 있습니다.</p>
+          </div>
+
+          <div id="statusMessage" class="status-message" aria-live="polite">
+            아직 생성 전입니다.
+          </div>
+
+          <div class="result-block">
+            <div class="result-head">
+              <h3>제목</h3>
+              <button id="copySubjectButton" type="button" class="ghost-button" disabled>
+                복사
+              </button>
+            </div>
+            <div id="subjectOutput" class="result-box muted-box">
+              생성 결과가 여기에 표시됩니다.
+            </div>
+          </div>
+
+          <div class="result-block">
+            <div class="result-head">
+              <h3>본문</h3>
+              <div class="result-actions">
+                <button id="copyBodyButton" type="button" class="ghost-button" disabled>
+                  본문 복사
+                </button>
+                <button id="copyAllButton" type="button" class="ghost-button" disabled>
+                  전체 복사
+                </button>
+              </div>
+            </div>
+            <pre id="bodyOutput" class="result-box muted-box">생성 결과가 여기에 표시됩니다.</pre>
+          </div>
+
+          <details class="details-panel">
+            <summary>모델에 전달되는 프롬프트 보기</summary>
+            <div class="details-actions">
+              <button id="copyPromptButton" type="button" class="ghost-button">
+                프롬프트 복사
+              </button>
+            </div>
+            <pre id="promptPreview" class="result-box prompt-preview"></pre>
+          </details>
+
+          <details class="details-panel">
+            <summary>원본 응답 보기</summary>
+            <pre id="rawOutput" class="result-box prompt-preview">아직 원본 응답이 없습니다.</pre>
+          </details>
+
+          <div class="caution-strip">
+            <strong>참고</strong>
+            <span>
+              GitHub Pages는 정적 호스팅이므로, 카나나 엔드포인트가 브라우저 CORS를 허용하지
+              않으면 직접 호출이 차단될 수 있습니다.
+            </span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

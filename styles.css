@@ -1,0 +1,383 @@
+:root {
+  --bg-top: #d8efe4;
+  --bg-bottom: #f8f7ef;
+  --surface: rgba(255, 252, 247, 0.9);
+  --surface-strong: #fffdfa;
+  --ink: #1f2b28;
+  --muted: #5f6e67;
+  --line: rgba(31, 43, 40, 0.12);
+  --primary: #1f6b5d;
+  --primary-strong: #164f45;
+  --accent: #cb6238;
+  --accent-soft: rgba(203, 98, 56, 0.12);
+  --warning: #9b4a2d;
+  --shadow: 0 20px 60px rgba(31, 43, 40, 0.08);
+  --radius: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "IBM Plex Sans KR", sans-serif;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(31, 43, 40, 0.03) 0,
+      rgba(31, 43, 40, 0.03) 1px,
+      transparent 1px,
+      transparent 24px
+    ),
+    linear-gradient(160deg, var(--bg-top) 0%, var(--bg-bottom) 72%);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.page-shell {
+  width: min(1240px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 32px 0 44px;
+}
+
+.page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-copy h1 {
+  margin: 0 0 8px;
+  font-family: "Gowun Batang", serif;
+  font-size: clamp(2.4rem, 4vw, 4rem);
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.header-copy p,
+.header-note span,
+.section-heading p,
+.microcopy,
+.caution-strip span {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.header-note {
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 24px;
+}
+
+.surface {
+  border: 1px solid rgba(31, 43, 40, 0.08);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.composer,
+.output {
+  padding: 28px;
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading h2,
+.result-head h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+
+.mail-form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.field input,
+.field textarea,
+.result-box,
+.status-message {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-strong);
+}
+
+.field input,
+.field textarea {
+  padding: 14px 16px;
+  color: var(--ink);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid rgba(31, 107, 93, 0.18);
+  border-color: rgba(31, 107, 93, 0.3);
+}
+
+.field textarea {
+  min-height: 200px;
+  resize: vertical;
+}
+
+.grid-two,
+.grid-three {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.secret-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.toggle-row,
+.actions,
+.result-head,
+.result-actions,
+.details-actions {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-row {
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.94rem;
+}
+
+.checkbox input {
+  inline-size: 18px;
+  block-size: 18px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.actions,
+.result-head {
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.result-actions,
+.details-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.primary-button {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.secondary-button {
+  background: var(--accent-soft);
+  color: var(--warning);
+  border-color: rgba(155, 74, 45, 0.14);
+  font-weight: 600;
+}
+
+.ghost-button {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.ghost-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.ghost-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.status-message,
+.result-box,
+.caution-strip {
+  padding: 16px 18px;
+}
+
+.status-message {
+  margin-bottom: 18px;
+  line-height: 1.6;
+  background: rgba(31, 107, 93, 0.08);
+}
+
+.status-message.is-error {
+  color: var(--warning);
+  background: rgba(203, 98, 56, 0.1);
+}
+
+.status-message.is-success {
+  color: var(--primary-strong);
+  background: rgba(31, 107, 93, 0.12);
+}
+
+.result-block + .result-block,
+.details-panel + .details-panel,
+.details-panel + .caution-strip {
+  margin-top: 18px;
+}
+
+.result-box {
+  min-height: 78px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.muted-box {
+  color: var(--muted);
+}
+
+.result-box.has-content {
+  color: var(--ink);
+}
+
+.details-panel {
+  border-top: 1px solid rgba(31, 43, 40, 0.08);
+  padding-top: 18px;
+}
+
+.details-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.prompt-preview {
+  margin-top: 14px;
+  min-height: 160px;
+}
+
+.caution-strip {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(155, 74, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(203, 98, 56, 0.08);
+}
+
+@media (max-width: 1080px) {
+  .page-header,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-shell {
+    width: min(100vw - 20px, 1240px);
+    padding: 20px 0 28px;
+  }
+
+  .composer,
+  .output {
+    padding: 20px;
+  }
+
+  .grid-two,
+  .grid-three {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .ghost-button {
+    width: 100%;
+  }
+}
