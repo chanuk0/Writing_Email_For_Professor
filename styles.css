@@ -85,7 +85,6 @@ button {
 .header-copy p,
 .header-note span,
 .section-heading p,
-.microcopy,
 .caution-strip span {
   margin: 0;
   color: var(--muted);
@@ -193,19 +192,12 @@ button {
   gap: 10px;
 }
 
-.toggle-row,
 .actions,
 .result-head,
 .result-actions,
 .details-actions {
   display: flex;
   align-items: center;
-}
-
-.toggle-row {
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
 .checkbox {

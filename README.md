@@ -1,23 +1,38 @@
 # Kanana Mail Studio
 
-교수님께 보낼 메일 초안을 카나나 API로 생성하는 GitHub Pages용 정적 웹페이지입니다.
+교수님께 보낼 메일 초안을 카나나 API로 생성하는 로컬 테스트용 웹앱입니다.
 
 ## 파일 구성
 
 - `index.html`: 페이지 구조
-- `styles.css`: 반응형 UI 스타일
-- `app.js`: 프롬프트 생성, 카나나 API 호출, 결과 파싱
-- `main.py`: 같은 프롬프트 규칙을 사용하는 파이썬 예제
+- `styles.css`: UI 스타일
+- `app.js`: 화면 동작, 로컬 서버 호출, 결과 파싱
+- `main.py`: 정적 파일 서버와 카나나 API 프록시
 
-## GitHub Pages 배포
+## 로컬 테스트 방법
 
-1. 이 폴더를 GitHub 저장소에 올립니다.
-2. 저장소 설정에서 `Pages`를 열고 배포 대상을 현재 브랜치 루트로 지정합니다.
-3. 배포가 끝나면 `index.html`이 기본 진입 페이지로 열립니다.
+1. PowerShell에서 프로젝트 폴더로 이동합니다.
 
-## 주의 사항
+   ```powershell
+   cd C:\Users\great\Desktop\Writing_Email_For_Professor
+   ```
 
-- 이 사이트는 정적 페이지이므로 카나나 API를 브라우저에서 직접 호출합니다.
-- API 키는 코드에 포함하지 않고 사용자가 직접 입력합니다.
-- 카나나 엔드포인트가 브라우저 `CORS`를 허용하지 않으면 GitHub Pages 단독 배포에서는 호출이 차단될 수 있습니다.
-- `main.py`는 더 이상 API 키를 하드코딩하지 않으며, `KANANA_API_KEY` 환경 변수를 사용합니다.
+2. 카나나 API 키를 환경 변수로 설정합니다.
+
+   ```powershell
+   $env:KANANA_API_KEY="본인_API_키"
+   ```
+
+3. 로컬 서버를 실행합니다.
+
+   ```powershell
+   python main.py
+   ```
+
+4. 브라우저에서 아래 주소를 엽니다.
+
+   ```text
+   http://127.0.0.1:8000
+   ```
+
+서버를 멈추려면 터미널에서 `Ctrl+C`를 누르면 됩니다. 다른 포트를 쓰고 싶으면 실행 전에 `$env:PORT="8080"`처럼 지정할 수 있습니다.

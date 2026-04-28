@@ -1,9 +1,22 @@
+import json
 import os
-
-from openai import OpenAI
+from http import HTTPStatus
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib import error, request
 
 BASE_URL = "https://kanana-o.a2s-endpoint.kr-central-2.kakaocloud.com/v1"
 MODEL_NAME = "kanana-o"
+HOST = "127.0.0.1"
+PORT = int(os.environ.get("PORT", "8000"))
+ROOT_DIR = Path(__file__).resolve().parent
+
+
+def normalize_professor_name(name: str) -> str:
+    trimmed = name.strip()
+    if trimmed.endswith("교수님"):
+        return trimmed.removesuffix("교수님").strip()
+    return trimmed
 
 
 def build_prompt(
@@ -14,6 +27,8 @@ def build_prompt(
     student_name: str,
     user_prompt: str,
 ) -> str:
+    professor_name = normalize_professor_name(professor_name)
+
     return f"""# Instruction
 당신은 대학생이 교수님께 보내는 비즈니스 이메일 작성기입니다. 아래 제공된 [Context]를 바탕으로, [Format & Style Rules]의 모든 형식적 규칙과 제약 사항을 100% 일치시켜 이메일 초안을 출력하세요.
 
@@ -59,28 +74,135 @@ def build_prompt(
 """
 
 
+def request_completion(prompt: str, api_key: str) -> dict:
+    payload = {
+        "model": MODEL_NAME,
+        "temperature": 0.35,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    body = json.dumps(payload).encode("utf-8")
+    api_request = request.Request(
+        f"{BASE_URL}/chat/completions",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    with request.urlopen(api_request, timeout=60) as response:
+        response_body = response.read().decode("utf-8")
+        return json.loads(response_body)
+
+
+class LocalAppHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(ROOT_DIR), **kwargs)
+
+    def do_POST(self) -> None:
+        if self.path != "/api/generate":
+            self.send_json({"error": "지원하지 않는 경로입니다."}, HTTPStatus.NOT_FOUND)
+            return
+
+        api_key = os.environ.get("KANANA_API_KEY", "").strip()
+        if not api_key:
+            self.send_json(
+                {"error": "KANANA_API_KEY 환경 변수를 설정해 주세요."},
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
+            return
+
+        try:
+            data = self.read_json_body()
+            cleaned = self.validate_payload(data)
+            prompt = build_prompt(**cleaned)
+            upstream_payload = request_completion(prompt, api_key)
+            message = (
+                upstream_payload.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+                .strip()
+            )
+
+            if not message:
+                self.send_json(
+                    {"error": "카나나 응답에서 메일 본문을 찾지 못했습니다.", "raw": upstream_payload},
+                    HTTPStatus.BAD_GATEWAY,
+                )
+                return
+
+            self.send_json({"message": message, "raw": upstream_payload})
+        except ValueError as exc:
+            self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+        except error.HTTPError as exc:
+            response_text = exc.read().decode("utf-8", errors="replace")
+            self.send_json(
+                {"error": response_text or exc.reason},
+                HTTPStatus(exc.code),
+            )
+        except error.URLError as exc:
+            self.send_json(
+                {"error": f"카나나 API에 연결하지 못했습니다: {exc.reason}"},
+                HTTPStatus.BAD_GATEWAY,
+            )
+        except TimeoutError:
+            self.send_json(
+                {"error": "카나나 API 응답 시간이 초과되었습니다."},
+                HTTPStatus.GATEWAY_TIMEOUT,
+            )
+
+    def read_json_body(self) -> dict:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        if content_length <= 0:
+            raise ValueError("요청 본문이 비어 있습니다.")
+        if content_length > 1024 * 1024:
+            raise ValueError("요청 본문이 너무 큽니다.")
+
+        body = self.rfile.read(content_length).decode("utf-8")
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError as exc:
+            raise ValueError("JSON 요청만 지원합니다.") from exc
+
+        if not isinstance(data, dict):
+            raise ValueError("요청 형식이 올바르지 않습니다.")
+        return data
+
+    def validate_payload(self, data: dict) -> dict:
+        fields = {
+            "professor_name": "professorName",
+            "course_name": "courseName",
+            "department": "department",
+            "student_id": "studentId",
+            "student_name": "studentName",
+            "user_prompt": "userPrompt",
+        }
+        cleaned = {
+            python_name: str(data.get(js_name, "")).strip()
+            for python_name, js_name in fields.items()
+        }
+
+        missing = [name for name, value in cleaned.items() if not value]
+        if missing:
+            raise ValueError("모든 입력 항목을 채워 주세요.")
+
+        return cleaned
+
+    def send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
+        body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 def main() -> None:
-    api_key = os.environ.get("KANANA_API_KEY")
-    if not api_key:
-        raise SystemExit("KANANA_API_KEY 환경 변수를 설정해 주세요.")
-
-    client = OpenAI(base_url=BASE_URL, api_key=api_key)
-    prompt = build_prompt(
-        professor_name="OOO",
-        course_name="데이터구조",
-        department="컴퓨터공학과",
-        student_id="20250123",
-        student_name="홍길동",
-        user_prompt="중간고사 일정과 공지 방식이 강의계획서 기준으로 진행되는지 확인하고 싶습니다.",
-    )
-
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.35,
-    )
-
-    print(response.choices[0].message.content)
+    server = ThreadingHTTPServer((HOST, PORT), LocalAppHandler)
+    print(f"Local server running at http://{HOST}:{PORT}")
+    print("Press Ctrl+C to stop.")
+    server.serve_forever()
 
 
 if __name__ == "__main__":
