@@ -1,5 +1,6 @@
 const LOCAL_API_PATH = "/api/generate";
 
+const workspace = document.querySelector("#workspace");
 const form = document.querySelector("#mail-form");
 const professorNameInput = document.querySelector("#professorName");
 const courseNameInput = document.querySelector("#courseName");
@@ -14,6 +15,8 @@ const copySubjectButton = document.querySelector("#copySubjectButton");
 const copyBodyButton = document.querySelector("#copyBodyButton");
 const copyAllButton = document.querySelector("#copyAllButton");
 const copyPromptButton = document.querySelector("#copyPromptButton");
+const loadingStage = document.querySelector("#loadingStage");
+const outputPanel = document.querySelector("#outputPanel");
 const statusMessage = document.querySelector("#statusMessage");
 const subjectOutput = document.querySelector("#subjectOutput");
 const bodyOutput = document.querySelector("#bodyOutput");
@@ -41,6 +44,7 @@ const exampleData = {
 initialize();
 
 function initialize() {
+  setViewState("idle");
   updatePromptPreview();
 
   form.addEventListener("submit", handleSubmit);
@@ -139,8 +143,9 @@ async function handleSubmit(event) {
 
   const data = getFormData();
 
+  setViewState("loading");
   setLoadingState(true);
-  setStatus("로컬 서버를 통해 카나나 API에 초안 생성을 요청하고 있습니다.", "pending");
+  setStatus("메일 초안을 생성하고 있습니다.", "pending");
   rawOutput.textContent = "응답을 기다리는 중입니다.";
 
   try {
@@ -174,10 +179,12 @@ async function handleSubmit(event) {
 
     renderDraft(parseDraft(message));
     setStatus("메일 초안이 생성되었습니다.", "success");
+    setViewState("result");
   } catch (error) {
     console.error(error);
     renderDraft({ subject: "", body: "" });
     setStatus(resolveDisplayError(error), "error");
+    setViewState("result");
   } finally {
     setLoadingState(false);
   }
@@ -266,6 +273,22 @@ function setLoadingState(isLoading) {
   generateButton.textContent = isLoading ? "생성 중..." : "메일 초안 생성";
 }
 
+function setViewState(state) {
+  workspace.classList.remove("is-idle", "is-loading", "is-result");
+  workspace.classList.add(`is-${state}`);
+
+  loadingStage.hidden = state !== "loading";
+  outputPanel.hidden = state !== "result";
+
+  if (state === "result") {
+    outputPanel.classList.remove("is-revealed");
+    requestAnimationFrame(() => {
+      outputPanel.classList.add("is-revealed");
+      outputPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+}
+
 function setStatus(message, tone) {
   statusMessage.textContent = message;
   statusMessage.classList.remove("is-error", "is-success");
@@ -300,6 +323,7 @@ function clearForm() {
   copyAllButton.disabled = true;
   toggleResultState(subjectOutput, false);
   toggleResultState(bodyOutput, false);
+  setViewState("idle");
   updatePromptPreview();
   setStatus("입력과 결과를 비웠습니다.", "pending");
 }
