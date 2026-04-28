@@ -1,6 +1,8 @@
 # Kanana Mail Studio
 
 교수님께 보낼 메일 초안을 카나나 API로 생성하는 로컬 테스트용 웹앱입니다.
+연구에 대한 자세한 내용은 아래 노션 페이지를 참고하세요.
+https://www.notion.so/Kanana-o-API-350460fb08a280ffad8ccae0ad4b7a6e?source=copy_link
 
 ## 파일 구성
 
