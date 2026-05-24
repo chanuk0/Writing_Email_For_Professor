@@ -1,7 +1,11 @@
 const LOCAL_API_PATH = "/api/generate";
+const API_KEY_STORAGE_KEY = "kananaMailStudio.apiKey";
 
 const workspace = document.querySelector("#workspace");
 const form = document.querySelector("#mail-form");
+const apiKeyInput = document.querySelector("#apiKey");
+const toggleApiKeyButton = document.querySelector("#toggleApiKeyButton");
+const rememberApiKeyInput = document.querySelector("#rememberApiKey");
 const professorNameInput = document.querySelector("#professorName");
 const courseNameInput = document.querySelector("#courseName");
 const studentNameInput = document.querySelector("#studentName");
@@ -44,10 +48,14 @@ const exampleData = {
 initialize();
 
 function initialize() {
+  restoreApiKey();
   setViewState("idle");
   updatePromptPreview();
 
   form.addEventListener("submit", handleSubmit);
+  apiKeyInput.addEventListener("input", handleApiKeyInput);
+  toggleApiKeyButton.addEventListener("click", toggleApiKeyVisibility);
+  rememberApiKeyInput.addEventListener("change", handleRememberApiKeyChange);
   fillExampleButton.addEventListener("click", fillExampleData);
   clearButton.addEventListener("click", clearForm);
   copySubjectButton.addEventListener("click", () => copyText(subjectOutput.textContent, "제목"));
@@ -62,6 +70,49 @@ function initialize() {
     input.addEventListener("input", updatePromptPreview);
     input.addEventListener("change", updatePromptPreview);
   });
+}
+
+function restoreApiKey() {
+  const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || "";
+  if (!savedApiKey) {
+    return;
+  }
+
+  apiKeyInput.value = savedApiKey;
+  rememberApiKeyInput.checked = true;
+}
+
+function handleApiKeyInput() {
+  if (rememberApiKeyInput.checked && apiKeyInput.value.trim()) {
+    localStorage.setItem(API_KEY_STORAGE_KEY, apiKeyInput.value.trim());
+    return;
+  }
+
+  if (!apiKeyInput.value.trim()) {
+    localStorage.removeItem(API_KEY_STORAGE_KEY);
+  }
+}
+
+function handleRememberApiKeyChange() {
+  if (rememberApiKeyInput.checked && apiKeyInput.value.trim()) {
+    localStorage.setItem(API_KEY_STORAGE_KEY, apiKeyInput.value.trim());
+    return;
+  }
+
+  localStorage.removeItem(API_KEY_STORAGE_KEY);
+}
+
+function forgetApiKey() {
+  apiKeyInput.value = "";
+  rememberApiKeyInput.checked = false;
+  localStorage.removeItem(API_KEY_STORAGE_KEY);
+}
+
+function toggleApiKeyVisibility() {
+  const shouldReveal = apiKeyInput.type === "password";
+  apiKeyInput.type = shouldReveal ? "text" : "password";
+  toggleApiKeyButton.textContent = shouldReveal ? "숨김" : "보기";
+  toggleApiKeyButton.setAttribute("aria-label", shouldReveal ? "API 키 숨기기" : "API 키 보기");
 }
 
 function getFormData() {
@@ -141,8 +192,18 @@ function updatePromptPreview() {
 async function handleSubmit(event) {
   event.preventDefault();
 
+  const apiKey = apiKeyInput.value.trim();
   const data = getFormData();
 
+  if (!apiKey) {
+    renderDraft({ subject: "", body: "" });
+    rawOutput.textContent = JSON.stringify({ error: "카나나 API 키를 입력해 주세요." }, null, 2);
+    setStatus("카나나 API 키를 입력해 주세요.", "error");
+    setViewState("result");
+    return;
+  }
+
+  handleApiKeyInput();
   setViewState("loading");
   setLoadingState(true);
   setStatus("메일 초안을 생성하고 있습니다.", "pending");
@@ -152,6 +213,7 @@ async function handleSubmit(event) {
     const response = await fetch(LOCAL_API_PATH, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
@@ -164,7 +226,7 @@ async function handleSubmit(event) {
     try {
       payload = JSON.parse(responseText);
     } catch (error) {
-      throw new Error("로컬 서버 응답을 해석하지 못했습니다.");
+      throw new Error("서버 응답을 해석하지 못했습니다.");
     }
 
     if (!response.ok) {
@@ -191,28 +253,36 @@ async function handleSubmit(event) {
 }
 
 function buildApiErrorMessage(statusCode, responseText) {
+  if (responseText) {
+    return responseText;
+  }
+
   if (statusCode === 401) {
-    return "KANANA_API_KEY가 올바르지 않거나 만료되었습니다.";
+    return "카나나 API 키가 올바르지 않거나 만료되었습니다.";
   }
 
   if (statusCode === 403) {
-    return "현재 KANANA_API_KEY로는 해당 모델에 접근할 수 없습니다.";
+    return "현재 카나나 API 키로는 해당 모델에 접근할 수 없습니다.";
   }
 
   if (statusCode === 429) {
     return "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
   }
 
+  if (statusCode === 504) {
+    return "카나나 API 응답 시간이 초과되었습니다.";
+  }
+
   if (statusCode >= 500) {
     return "카나나 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   }
 
-  return `요청이 실패했습니다. 상태 코드: ${statusCode}\n${responseText}`;
+  return `요청이 실패했습니다. 상태 코드: ${statusCode}`;
 }
 
 function resolveDisplayError(error) {
   if (error instanceof TypeError) {
-    return "로컬 서버에 연결하지 못했습니다. python main.py를 실행한 뒤 http://127.0.0.1:8000 에서 접속해 주세요.";
+    return "서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.";
   }
 
   return error.message || "알 수 없는 오류가 발생했습니다.";
@@ -270,6 +340,9 @@ function setLoadingState(isLoading) {
   generateButton.disabled = isLoading;
   fillExampleButton.disabled = isLoading;
   clearButton.disabled = isLoading;
+  apiKeyInput.disabled = isLoading;
+  toggleApiKeyButton.disabled = isLoading;
+  rememberApiKeyInput.disabled = isLoading;
   generateButton.textContent = isLoading ? "생성 중..." : "메일 초안 생성";
 }
 
@@ -310,14 +383,15 @@ function fillExampleData() {
   studentIdInput.value = exampleData.studentId;
   userPromptInput.value = exampleData.userPrompt;
   updatePromptPreview();
-  setStatus("예시 입력을 채웠습니다. 로컬 서버에 API 키가 설정되어 있으면 바로 생성할 수 있습니다.", "pending");
+  setStatus("예시 입력을 채웠습니다. 카나나 API 키를 입력하면 바로 생성할 수 있습니다.", "pending");
 }
 
 function clearForm() {
   form.reset();
+  forgetApiKey();
   subjectOutput.textContent = "생성 결과가 여기에 표시됩니다.";
   bodyOutput.textContent = "생성 결과가 여기에 표시됩니다.";
-  rawOutput.textContent = "아직 원본 응답이 없습니다.";
+  rawOutput.textContent = "아직 서버 응답이 없습니다.";
   copySubjectButton.disabled = true;
   copyBodyButton.disabled = true;
   copyAllButton.disabled = true;

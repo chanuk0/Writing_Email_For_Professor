@@ -10,6 +10,7 @@ MODEL_NAME = "kanana-o"
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("PORT", "8000"))
 ROOT_DIR = Path(__file__).resolve().parent
+PUBLIC_DIR = ROOT_DIR / "public"
 
 
 def normalize_professor_name(name: str) -> str:
@@ -96,20 +97,45 @@ def request_completion(prompt: str, api_key: str) -> dict:
         return json.loads(response_body)
 
 
+def map_upstream_status(status_code: int) -> HTTPStatus:
+    if status_code in (401, 403, 429):
+        return HTTPStatus(status_code)
+    if status_code in (408, 504):
+        return HTTPStatus.GATEWAY_TIMEOUT
+    if status_code >= 500:
+        return HTTPStatus.BAD_GATEWAY
+    return HTTPStatus.BAD_REQUEST
+
+
+def resolve_upstream_error(status_code: int) -> str:
+    if status_code == 401:
+        return "카나나 API 키가 올바르지 않거나 만료되었습니다."
+    if status_code == 403:
+        return "현재 카나나 API 키로는 해당 모델에 접근할 수 없습니다."
+    if status_code == 429:
+        return "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
+    if status_code in (408, 504):
+        return "카나나 API 응답 시간이 초과되었습니다."
+    if status_code >= 500:
+        return "카나나 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+    return "카나나 API 요청이 실패했습니다."
+
+
 class LocalAppHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT_DIR), **kwargs)
+        static_dir = PUBLIC_DIR if PUBLIC_DIR.exists() else ROOT_DIR
+        super().__init__(*args, directory=str(static_dir), **kwargs)
 
     def do_POST(self) -> None:
         if self.path != "/api/generate":
             self.send_json({"error": "지원하지 않는 경로입니다."}, HTTPStatus.NOT_FOUND)
             return
 
-        api_key = os.environ.get("KANANA_API_KEY", "").strip()
+        api_key = self.get_api_key()
         if not api_key:
             self.send_json(
-                {"error": "KANANA_API_KEY 환경 변수를 설정해 주세요."},
-                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": "카나나 API 키를 입력해 주세요."},
+                HTTPStatus.UNAUTHORIZED,
             )
             return
 
@@ -127,19 +153,18 @@ class LocalAppHandler(SimpleHTTPRequestHandler):
 
             if not message:
                 self.send_json(
-                    {"error": "카나나 응답에서 메일 본문을 찾지 못했습니다.", "raw": upstream_payload},
+                    {"error": "카나나 응답에서 메일 본문을 찾지 못했습니다."},
                     HTTPStatus.BAD_GATEWAY,
                 )
                 return
 
-            self.send_json({"message": message, "raw": upstream_payload})
+            self.send_json({"message": message})
         except ValueError as exc:
             self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
         except error.HTTPError as exc:
-            response_text = exc.read().decode("utf-8", errors="replace")
             self.send_json(
-                {"error": response_text or exc.reason},
-                HTTPStatus(exc.code),
+                {"error": resolve_upstream_error(exc.code)},
+                map_upstream_status(exc.code),
             )
         except error.URLError as exc:
             self.send_json(
@@ -151,6 +176,13 @@ class LocalAppHandler(SimpleHTTPRequestHandler):
                 {"error": "카나나 API 응답 시간이 초과되었습니다."},
                 HTTPStatus.GATEWAY_TIMEOUT,
             )
+
+    def get_api_key(self) -> str:
+        authorization = self.headers.get("Authorization", "")
+        if authorization.lower().startswith("bearer "):
+            return authorization[7:].strip()
+
+        return os.environ.get("KANANA_API_KEY", "").strip()
 
     def read_json_body(self) -> dict:
         content_length = int(self.headers.get("Content-Length", "0"))
@@ -193,6 +225,7 @@ class LocalAppHandler(SimpleHTTPRequestHandler):
         body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
