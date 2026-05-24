@@ -25,7 +25,7 @@ async function handleGenerate(request) {
 
   const apiKey = getBearerToken(request.headers.get("Authorization"));
   if (!apiKey) {
-    return jsonResponse({ error: "카나나 API 키를 입력해 주세요." }, 401);
+    return jsonResponse({ error: "Kanana API 키를 입력해 주세요." }, 401);
   }
 
   try {
@@ -36,7 +36,7 @@ async function handleGenerate(request) {
     const message = extractMessage(upstreamPayload);
 
     if (!message) {
-      return jsonResponse({ error: "카나나 응답에서 메일 본문을 찾지 못했습니다." }, 502);
+      return jsonResponse({ error: "Kanana 응답에서 메일 본문을 찾지 못했습니다." }, 502);
     }
 
     return jsonResponse({ message });
@@ -46,7 +46,7 @@ async function handleGenerate(request) {
     }
 
     if (error instanceof DOMException && error.name === "TimeoutError") {
-      return jsonResponse({ error: "카나나 API 응답 시간이 초과되었습니다." }, 504);
+      return jsonResponse({ error: "Kanana API 응답 시간이 초과되었습니다." }, 504);
     }
 
     return jsonResponse({ error: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 502);
@@ -208,7 +208,7 @@ async function requestCompletion(prompt, apiKey) {
   }
 
   if (!payload || typeof payload !== "object") {
-    throw new AppError("카나나 응답을 해석하지 못했습니다.", 502);
+    throw new AppError("Kanana 응답을 해석하지 못했습니다.", 502);
   }
 
   return payload;
@@ -232,11 +232,11 @@ function mapUpstreamStatus(status) {
 
 function resolveUpstreamError(status) {
   if (status === 401) {
-    return "카나나 API 키가 올바르지 않거나 만료되었습니다.";
+    return "Kanana API 키가 올바르지 않거나 만료되었습니다.";
   }
 
   if (status === 403) {
-    return "현재 카나나 API 키로는 해당 모델에 접근할 수 없습니다.";
+    return "현재 Kanana API 키로는 해당 모델에 접근할 수 없습니다.";
   }
 
   if (status === 429) {
@@ -244,14 +244,14 @@ function resolveUpstreamError(status) {
   }
 
   if (status === 408 || status === 504) {
-    return "카나나 API 응답 시간이 초과되었습니다.";
+    return "Kanana API 응답 시간이 초과되었습니다.";
   }
 
   if (status >= 500) {
-    return "카나나 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+    return "Kanana 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   }
 
-  return "카나나 API 요청이 실패했습니다.";
+  return "Kanana API 요청이 실패했습니다.";
 }
 
 function jsonResponse(payload, status = 200, extraHeaders = {}) {

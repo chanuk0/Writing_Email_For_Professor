@@ -1,6 +1,10 @@
 # Kanana Mail Studio
 
-교수님께 보낼 메일 초안을 카나나 API로 생성하는 웹앱입니다. 사용자는 본인 카나나 API 키를 입력해 사용하고, 배포 서버는 API 키를 저장하지 않습니다.
+한국어 문어체에 강한 Kanana AI를 활용해 대학생이 교수님께 보낼 정중한 메일 초안을 작성하는 웹앱입니다. 카카오 AI 앰배서더 활동의 Kanana API 활용기 프로젝트로, KANANA429 찬욱이 제작했습니다.
+
+연구와 제작 과정에 대한 자세한 내용은 아래 Notion 페이지를 참고하세요.
+
+https://www.notion.so/Kanana-o-API-350460fb08a280ffad8ccae0ad4b7a6e?source=copy_link
 
 ## 구성
 
@@ -39,14 +43,17 @@
    npm run deploy
    ```
 
-배포가 끝나면 Wrangler가 `*.workers.dev` 공용 링크를 출력합니다. Cloudflare Workers Free 한도를 넘으면 요청이 실패할 수 있지만, 별도 유료 플랜을 켜지 않는 한 운영 서버 비용은 0원을 목표로 합니다.
+배포가 끝나면 Wrangler가 `https://...workers.dev` 형식의 공용 링크를 출력합니다. 해당 링크를 공유하면 사용자는 본인 Kanana API 키로 서비스를 이용할 수 있습니다.
 
-## API 키 보안
+## API 키와 개인정보 안내
 
-- 사용자의 카나나 API 키는 `/api/generate` 요청의 `Authorization` 헤더로만 전송됩니다.
-- Worker는 키를 환경 변수, DB, 로그에 저장하지 않습니다.
-- `이 기기에 기억`을 켜면 키가 서버가 아니라 현재 브라우저의 `localStorage`에만 저장됩니다.
-- 공용 PC에서는 `이 기기에 기억`을 사용하지 않는 것을 권장합니다.
+- 사용자의 Kanana API 키는 `/api/generate` 요청의 `Authorization` 헤더로만 전송됩니다.
+- Worker는 API 키를 환경 변수, DB, 로그에 저장하지 않습니다.
+- `브라우저에만 저장`을 켜면 API 키가 서버가 아니라 현재 브라우저의 `localStorage`에만 저장됩니다.
+- 공용 PC에서는 API 키 저장을 사용하지 않는 것을 권장합니다.
+- 교수님 성함, 이름, 학과, 학번, 메일 상황은 초안 생성을 위해 Kanana API로 전송됩니다.
+- 생성된 메일은 초안이므로 실제 발송 전 사용자가 반드시 내용을 확인해야 합니다.
+- 이 서비스는 카카오 공식 서비스가 아닌 카카오 AI 앰배서더 활동의 Kanana API 활용 데모입니다.
 
 ## 선택: Python 로컬 서버
 

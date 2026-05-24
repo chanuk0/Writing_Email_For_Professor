@@ -6,6 +6,8 @@ const form = document.querySelector("#mail-form");
 const apiKeyInput = document.querySelector("#apiKey");
 const toggleApiKeyButton = document.querySelector("#toggleApiKeyButton");
 const rememberApiKeyInput = document.querySelector("#rememberApiKey");
+const forgetApiKeyButton = document.querySelector("#forgetApiKeyButton");
+const apiKeyStatus = document.querySelector("#apiKeyStatus");
 const professorNameInput = document.querySelector("#professorName");
 const courseNameInput = document.querySelector("#courseName");
 const studentNameInput = document.querySelector("#studentName");
@@ -56,6 +58,7 @@ function initialize() {
   apiKeyInput.addEventListener("input", handleApiKeyInput);
   toggleApiKeyButton.addEventListener("click", toggleApiKeyVisibility);
   rememberApiKeyInput.addEventListener("change", handleRememberApiKeyChange);
+  forgetApiKeyButton.addEventListener("click", () => forgetApiKey(true));
   fillExampleButton.addEventListener("click", fillExampleData);
   clearButton.addEventListener("click", clearForm);
   copySubjectButton.addEventListener("click", () => copyText(subjectOutput.textContent, "제목"));
@@ -80,32 +83,51 @@ function restoreApiKey() {
 
   apiKeyInput.value = savedApiKey;
   rememberApiKeyInput.checked = true;
+  setApiKeyStatus("저장된 API 키를 이 브라우저에서 불러왔습니다.");
 }
 
 function handleApiKeyInput() {
   if (rememberApiKeyInput.checked && apiKeyInput.value.trim()) {
     localStorage.setItem(API_KEY_STORAGE_KEY, apiKeyInput.value.trim());
+    setApiKeyStatus("API 키가 이 브라우저에 저장되었습니다.");
     return;
   }
 
   if (!apiKeyInput.value.trim()) {
     localStorage.removeItem(API_KEY_STORAGE_KEY);
+    setApiKeyStatus("저장된 API 키를 삭제했습니다.");
   }
 }
 
 function handleRememberApiKeyChange() {
   if (rememberApiKeyInput.checked && apiKeyInput.value.trim()) {
     localStorage.setItem(API_KEY_STORAGE_KEY, apiKeyInput.value.trim());
+    setApiKeyStatus("API 키가 이 브라우저에 저장되었습니다.");
     return;
   }
 
   localStorage.removeItem(API_KEY_STORAGE_KEY);
+
+  if (rememberApiKeyInput.checked) {
+    setApiKeyStatus("API 키를 입력하면 이 브라우저에 저장됩니다.");
+    return;
+  }
+
+  setApiKeyStatus("브라우저 저장을 해제했습니다.");
 }
 
-function forgetApiKey() {
+function forgetApiKey(showStatus = false) {
   apiKeyInput.value = "";
   rememberApiKeyInput.checked = false;
   localStorage.removeItem(API_KEY_STORAGE_KEY);
+
+  if (showStatus) {
+    setApiKeyStatus("브라우저에 저장된 Kanana API 키를 삭제했습니다.");
+  }
+}
+
+function setApiKeyStatus(message) {
+  apiKeyStatus.textContent = message;
 }
 
 function toggleApiKeyVisibility() {
@@ -197,8 +219,8 @@ async function handleSubmit(event) {
 
   if (!apiKey) {
     renderDraft({ subject: "", body: "" });
-    rawOutput.textContent = JSON.stringify({ error: "카나나 API 키를 입력해 주세요." }, null, 2);
-    setStatus("카나나 API 키를 입력해 주세요.", "error");
+    rawOutput.textContent = JSON.stringify({ error: "Kanana API 키를 입력해 주세요." }, null, 2);
+    setStatus("Kanana API 키를 입력해 주세요.", "error");
     setViewState("result");
     return;
   }
@@ -258,11 +280,11 @@ function buildApiErrorMessage(statusCode, responseText) {
   }
 
   if (statusCode === 401) {
-    return "카나나 API 키가 올바르지 않거나 만료되었습니다.";
+    return "Kanana API 키가 올바르지 않거나 만료되었습니다.";
   }
 
   if (statusCode === 403) {
-    return "현재 카나나 API 키로는 해당 모델에 접근할 수 없습니다.";
+    return "현재 Kanana API 키로는 해당 모델에 접근할 수 없습니다.";
   }
 
   if (statusCode === 429) {
@@ -270,11 +292,11 @@ function buildApiErrorMessage(statusCode, responseText) {
   }
 
   if (statusCode === 504) {
-    return "카나나 API 응답 시간이 초과되었습니다.";
+    return "Kanana API 응답 시간이 초과되었습니다.";
   }
 
   if (statusCode >= 500) {
-    return "카나나 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+    return "Kanana 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   }
 
   return `요청이 실패했습니다. 상태 코드: ${statusCode}`;
@@ -343,6 +365,7 @@ function setLoadingState(isLoading) {
   apiKeyInput.disabled = isLoading;
   toggleApiKeyButton.disabled = isLoading;
   rememberApiKeyInput.disabled = isLoading;
+  forgetApiKeyButton.disabled = isLoading;
   generateButton.textContent = isLoading ? "생성 중..." : "메일 초안 생성";
 }
 
@@ -383,12 +406,13 @@ function fillExampleData() {
   studentIdInput.value = exampleData.studentId;
   userPromptInput.value = exampleData.userPrompt;
   updatePromptPreview();
-  setStatus("예시 입력을 채웠습니다. 카나나 API 키를 입력하면 바로 생성할 수 있습니다.", "pending");
+  setStatus("예시 입력을 채웠습니다. Kanana API 키를 입력하면 바로 생성할 수 있습니다.", "pending");
 }
 
 function clearForm() {
   form.reset();
   forgetApiKey();
+  setApiKeyStatus("");
   subjectOutput.textContent = "생성 결과가 여기에 표시됩니다.";
   bodyOutput.textContent = "생성 결과가 여기에 표시됩니다.";
   rawOutput.textContent = "아직 서버 응답이 없습니다.";

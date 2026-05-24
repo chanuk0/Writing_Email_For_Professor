@@ -6,7 +6,7 @@
     <title>Kanana Mail Studio</title>
     <meta
       name="description"
-      content="대학생이 교수님께 보낼 메일 초안을 카나나 API로 작성하는 웹앱"
+      content="대학생을 위한 Kanana AI: 교수님께 보내는 정중한 메일 초안을 빠르게 작성하는 웹앱"
     >
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,20 +21,27 @@
       <header class="page-header">
         <div class="header-copy">
           <h1>Kanana Mail Studio</h1>
+          <p>
+            대학생을 위한 Kanana AI: 교수님께 보내는 정중한 메일 초안을 빠르게 작성합니다.
+          </p>
+          <div class="project-meta" aria-label="프로젝트 정보">
+            <span>카카오 AI 앰배서더 Kanana API 활용 데모</span>
+            <span>KANANA429 찬욱 제작</span>
+          </div>
         </div>
       </header>
 
       <main id="workspace" class="workspace is-idle">
         <section class="surface composer">
           <div class="section-heading">
-            <h2>입력</h2>
-            <p>카나나 API 키와 메일 상황을 입력하면 바로 초안을 만들 수 있습니다.</p>
+            <h2>메일 정보 입력</h2>
+            <p>본인 Kanana API 키와 메일 상황을 입력하면 제목과 본문 초안을 생성합니다.</p>
           </div>
 
           <form id="mail-form" class="mail-form">
             <div class="api-key-panel">
               <label class="field">
-                <span>카나나 API 키</span>
+                <span>Kanana API 키</span>
                 <div class="secret-row">
                   <input
                     id="apiKey"
@@ -56,11 +63,24 @@
 
               <label class="remember-field">
                 <input id="rememberApiKey" type="checkbox">
-                <span>이 기기에 기억</span>
+                <span>브라우저에만 저장</span>
               </label>
 
+              <button id="forgetApiKeyButton" type="button" class="ghost-button compact-button">
+                저장된 키 삭제
+              </button>
+
               <p class="field-hint">
-                공용 PC에서는 저장하지 마세요. API 키는 서버에 저장되지 않고 요청할 때만 사용됩니다.
+                API 키는 서버에 저장하지 않고 요청할 때만 사용됩니다. 저장을 선택하면 현재 브라우저에만 남으므로 공용 PC에서는 사용하지 마세요.
+              </p>
+              <p id="apiKeyStatus" class="field-hint key-status" aria-live="polite"></p>
+            </div>
+
+            <div class="notice-panel">
+              <strong>입력 전 확인</strong>
+              <p>
+                교수님 성함, 이름, 학과, 학번, 메일 상황은 초안 생성을 위해 Kanana API로 전송됩니다.
+                민감한 개인정보나 불필요한 사적인 내용은 입력하지 말고, 생성된 메일은 실제 발송 전 반드시 직접 확인하세요.
               </p>
             </div>
 
@@ -217,7 +237,8 @@
           <div class="caution-strip">
             <strong>참고</strong>
             <span>
-              배포 서버는 API 키를 저장하지 않습니다. 저장을 선택한 키는 이 브라우저에만 남습니다.
+              이 서비스는 카카오 공식 서비스가 아닌 카카오 AI 앰배서더 활동의 Kanana API 활용 데모입니다.
+              배포 서버는 API 키를 저장하지 않으며, 저장을 선택한 키는 이 브라우저에만 남습니다.
             </span>
           </div>
         </section>

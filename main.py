@@ -109,16 +109,16 @@ def map_upstream_status(status_code: int) -> HTTPStatus:
 
 def resolve_upstream_error(status_code: int) -> str:
     if status_code == 401:
-        return "카나나 API 키가 올바르지 않거나 만료되었습니다."
+        return "Kanana API 키가 올바르지 않거나 만료되었습니다."
     if status_code == 403:
-        return "현재 카나나 API 키로는 해당 모델에 접근할 수 없습니다."
+        return "현재 Kanana API 키로는 해당 모델에 접근할 수 없습니다."
     if status_code == 429:
         return "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
     if status_code in (408, 504):
-        return "카나나 API 응답 시간이 초과되었습니다."
+        return "Kanana API 응답 시간이 초과되었습니다."
     if status_code >= 500:
-        return "카나나 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
-    return "카나나 API 요청이 실패했습니다."
+        return "Kanana 서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+    return "Kanana API 요청이 실패했습니다."
 
 
 class LocalAppHandler(SimpleHTTPRequestHandler):
@@ -134,7 +134,7 @@ class LocalAppHandler(SimpleHTTPRequestHandler):
         api_key = self.get_api_key()
         if not api_key:
             self.send_json(
-                {"error": "카나나 API 키를 입력해 주세요."},
+                {"error": "Kanana API 키를 입력해 주세요."},
                 HTTPStatus.UNAUTHORIZED,
             )
             return
@@ -153,7 +153,7 @@ class LocalAppHandler(SimpleHTTPRequestHandler):
 
             if not message:
                 self.send_json(
-                    {"error": "카나나 응답에서 메일 본문을 찾지 못했습니다."},
+                    {"error": "Kanana 응답에서 메일 본문을 찾지 못했습니다."},
                     HTTPStatus.BAD_GATEWAY,
                 )
                 return
@@ -168,12 +168,12 @@ class LocalAppHandler(SimpleHTTPRequestHandler):
             )
         except error.URLError as exc:
             self.send_json(
-                {"error": f"카나나 API에 연결하지 못했습니다: {exc.reason}"},
+                {"error": f"Kanana API에 연결하지 못했습니다: {exc.reason}"},
                 HTTPStatus.BAD_GATEWAY,
             )
         except TimeoutError:
             self.send_json(
-                {"error": "카나나 API 응답 시간이 초과되었습니다."},
+                {"error": "Kanana API 응답 시간이 초과되었습니다."},
                 HTTPStatus.GATEWAY_TIMEOUT,
             )
 
